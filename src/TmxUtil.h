@@ -36,6 +36,8 @@ namespace Tmx
     {
     public:
 
+        typedef std::vector<char> ByteArray;
+
         // Trim both leading and trailing whitespace from a string.
         static std::string &Trim(std::string &str);
 
@@ -43,9 +45,9 @@ namespace Tmx
         static std::string DecodeBase64(const std::string &str);
 
         // Decompress a gzip encoded byte array.
-        static char* DecompressZLIB(const std::string& data, unsigned int expectedSize);
+        static Util::ByteArray DecompressZLIB(const std::string& data, unsigned int expectedSize);
 
         // Decompress a gzip encoded byte array.
-        static char* DecompressGZIP(const std::string& data, unsigned int expectedSize);
+        static Util::ByteArray DecompressGZIP(const std::string& data, unsigned int expectedSize);
     };
 }

@@ -23,6 +23,7 @@ if (USE_MINIZ)
 endif (USE_MINIZ)
 
 find_package(TinyXML2)
+find_package(Boost REQUIRED COMPONENTS iostreams)
 
 if (NOT USE_MINIZ)
     find_package(ZLIB)
@@ -48,7 +49,7 @@ set_target_properties(tmxparser PROPERTIES
   VERSION ${VERSION}
   COMPILE_FLAGS ${LIB_CFLAGS})
 
-target_link_libraries(tmxparser ${TINYXML2_LIBRARIES})
+target_link_libraries(tmxparser ${TINYXML2_LIBRARIES} ${Boost_IOSTREAMS_LIBRARY})
 include_directories(${TINYXML2_INCLUDE_DIR})
 
 if (NOT USE_MINIZ)

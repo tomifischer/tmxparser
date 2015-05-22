@@ -26,7 +26,12 @@
 // Author: Tamir Atias
 //-----------------------------------------------------------------------------
 #include <stdlib.h>
-#include <algorithm>
+#include <boost/algorithm/string.hpp>
+#include <sstream>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 
 #ifdef USE_MINIZ
 #define MINIZ_HEADER_FILE_ONLY
@@ -42,26 +47,10 @@
 
 namespace Tmx {
 
-    // trim from start
-    static inline std::string &ltrim(std::string &s) {
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-        return s;
-    }
-
-    // trim from end
-    static inline std::string &rtrim(std::string &s) {
-        s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-        return s;
-    }
-
-    // trim from both ends
-    static inline std::string &trim(std::string &s) {
-        return ltrim(rtrim(s));
-    }
-
     std::string &Util::Trim(std::string &str)
     {
-        return trim( str );
+        boost::algorithm::trim( str );
+        return str;
     }
 
     std::string Util::DecodeBase64(const std::string &str) 
@@ -69,84 +58,31 @@ namespace Tmx {
         return base64_decode(str);
     }
 
-    char* Util::DecompressZLIB(const std::string& data, unsigned int expectedSize)
+    Util::ByteArray Util::DecompressZLIB(const std::string& data, unsigned int expectedSize)
     {
-      char *out = (char *)malloc(expectedSize);
-      uLongf bufferSize = expectedSize;
+        Util::ByteArray decompressed;
+        decompressed.reserve( expectedSize );
 
-      uncompress(
-          (Bytef*)out, &bufferSize, 
-          (const Bytef*)data.c_str(), data.size()
-      );
+        boost::iostreams::filtering_ostream os;
+        os.push(boost::iostreams::zlib_decompressor());
+        os.push(boost::iostreams::back_inserter(decompressed));
 
-      return out;
+        os << data;
+
+        return decompressed;
     }
 
-    char* Util::DecompressGZIP(const std::string& data, unsigned int expectedSize)
+    Util::ByteArray Util::DecompressGZIP(const std::string& data, unsigned int expectedSize)
     {
-        int bufferSize = expectedSize;
-        int ret;
-        z_stream strm;
-        char *out = (char*)malloc(bufferSize);
+        Util::ByteArray decompressed;
+        decompressed.reserve( expectedSize );
 
-        strm.zalloc = Z_NULL;
-        strm.zfree = Z_NULL;
-        strm.opaque = Z_NULL;
-        strm.next_in = (Bytef*) data.c_str();
-        strm.avail_in = data.size();
-        strm.next_out = (Bytef*)out;
-        strm.avail_out = bufferSize;
+        boost::iostreams::filtering_ostream os;
+        os.push(boost::iostreams::gzip_decompressor());
+        os.push(boost::iostreams::back_inserter(decompressed));
 
-        ret = inflateInit2(&strm, 15 + 32);
+        os << data;
 
-        if (ret != Z_OK) 
-        {
-            free(out);
-            return NULL;
-        }
-
-        do 
-        {
-            ret = inflate(&strm, Z_SYNC_FLUSH);
-
-            switch (ret) 
-            {
-                case Z_NEED_DICT:
-                case Z_STREAM_ERROR:
-                    ret = Z_DATA_ERROR;
-                case Z_DATA_ERROR:
-                case Z_MEM_ERROR:
-                    inflateEnd(&strm);
-                    free(out);
-                    return NULL;
-            }
-
-            if (ret != Z_STREAM_END) 
-            {
-                out = (char *) realloc(out, bufferSize * 2);
-
-                if (!out) 
-                {
-                    inflateEnd(&strm);
-                    free(out);
-                    return NULL;
-                }
-
-                strm.next_out = (Bytef *)(out + bufferSize);
-                strm.avail_out = bufferSize;
-                bufferSize *= 2;
-            }
-        }
-        while (ret != Z_STREAM_END);
-
-        if (strm.avail_in != 0) 
-        {
-            free(out);
-            return NULL;
-        }
-
-        inflateEnd(&strm);
-
-        return out;
+        return decompressed;
     }
 }

@@ -170,33 +170,27 @@ namespace Tmx
         const std::string &text = Util::DecodeBase64(testText);
 
         // Temporary array of gids to be converted to map tiles.
-        unsigned *out = NULL;
+        Util::ByteArray out;
         unsigned int expectedSize = width * height * 4;
 
         if (compression == TMX_COMPRESSION_ZLIB) 
         {
             // Use zlib to uncompress the tile layer into the temporary array of tiles.
-            out = (unsigned*) Util::DecompressZLIB(
+            out = Util::DecompressZLIB(
                 text, expectedSize
             );
-    
         } 
         else if (compression == TMX_COMPRESSION_GZIP) 
         {
             // Use the utility class for decompressing (which uses zlib)
-            out = (unsigned*) Util::DecompressGZIP(
+            out = Util::DecompressGZIP(
                 text, expectedSize
             );
         } 
         else 
         {
-            out = (unsigned *)malloc(text.size());
-        
-            // Copy every gid into the temporary array since
-            // the decoded string is an array of 32-bit integers.
-            memcpy(out, text.c_str(), text.size());
+            out = Util::ByteArray(text.begin(), text.end());
         }
-
         // Convert the gids to map tiles.
         for (int x = 0; x < width; x++)
         {
@@ -219,9 +213,6 @@ namespace Tmx
                 }
             }
         }
-
-        // Free the temporary array from memory.
-        free(out);
     }
 
     void TileLayer::ParseCSV(const std::string &innerText) 
