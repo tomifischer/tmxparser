@@ -24,13 +24,6 @@
 #include <tinyxml2.h>
 #include <algorithm>
 
-#ifdef USE_MINIZ
-#define MINIZ_HEADER_FILE_ONLY
-#include "miniz.c"
-#else
-#include <zlib.h>
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -171,31 +164,29 @@ namespace Tmx
 
     void TileLayer::ParseBase64(const std::string &innerText) 
     {
-    	std::string testText = innerText;
-    	Util::Trim( testText );
+        std::string testText = innerText;
+        Util::Trim( testText );
 
         const std::string &text = Util::DecodeBase64(testText);
 
         // Temporary array of gids to be converted to map tiles.
-        unsigned *out = 0;
+        unsigned *out = NULL;
+        unsigned int expectedSize = width * height * 4;
 
         if (compression == TMX_COMPRESSION_ZLIB) 
         {
             // Use zlib to uncompress the tile layer into the temporary array of tiles.
-            uLongf outlen = width * height * 4;
-            out = (unsigned *)malloc(outlen);
-            uncompress(
-                (Bytef*)out, &outlen, 
-                (const Bytef*)text.c_str(), text.size());
+            out = (unsigned*) Util::DecompressZLIB(
+                text, expectedSize
+            );
     
         } 
         else if (compression == TMX_COMPRESSION_GZIP) 
         {
             // Use the utility class for decompressing (which uses zlib)
-            out = (unsigned *)Util::DecompressGZIP(
-                text.c_str(), 
-                text.size(), 
-                width * height * 4);
+            out = (unsigned*) Util::DecompressGZIP(
+                text, expectedSize
+            );
         } 
         else 
         {

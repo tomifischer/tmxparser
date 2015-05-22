@@ -28,6 +28,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace Tmx 
 {
@@ -42,6 +43,9 @@ namespace Tmx
         static std::string DecodeBase64(const std::string &str);
 
         // Decompress a gzip encoded byte array.
-        static char* DecompressGZIP(const char *data, int dataSize, int expectedSize);
+        static char* DecompressZLIB(const std::string& data, unsigned int expectedSize);
+
+        // Decompress a gzip encoded byte array.
+        static char* DecompressGZIP(const std::string& data, unsigned int expectedSize);
     };
 }

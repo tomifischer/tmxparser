@@ -69,7 +69,20 @@ namespace Tmx {
         return base64_decode(str);
     }
 
-    char *Util::DecompressGZIP(const char *data, int dataSize, int expectedSize) 
+    char* Util::DecompressZLIB(const std::string& data, unsigned int expectedSize)
+    {
+      char *out = (char *)malloc(expectedSize);
+      uLongf bufferSize = expectedSize;
+
+      uncompress(
+          (Bytef*)out, &bufferSize, 
+          (const Bytef*)data.c_str(), data.size()
+      );
+
+      return out;
+    }
+
+    char* Util::DecompressGZIP(const std::string& data, unsigned int expectedSize)
     {
         int bufferSize = expectedSize;
         int ret;
@@ -79,8 +92,8 @@ namespace Tmx {
         strm.zalloc = Z_NULL;
         strm.zfree = Z_NULL;
         strm.opaque = Z_NULL;
-        strm.next_in = (Bytef*)data;
-        strm.avail_in = dataSize;
+        strm.next_in = (Bytef*) data.c_str();
+        strm.avail_in = data.size();
         strm.next_out = (Bytef*)out;
         strm.avail_out = bufferSize;
 
