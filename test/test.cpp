@@ -21,9 +21,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //-----------------------------------------------------------------------------
-#include "../src/Tmx.h"
+#include "Tmx.h"
 #include <cstdio>
-#include <stdlib.h>
+#include <cstdlib>
 
 int main(int argc, char * argv[])
 {
@@ -36,10 +36,27 @@ int main(int argc, char * argv[])
         printf("error code: %d\n", map->GetErrorCode());
         printf("error text: %s\n", map->GetErrorText().c_str());
 
-        system("PAUSE");
-
         return map->GetErrorCode();
     }
+
+    printf("====================================\n");
+    printf("Map\n");
+    printf("====================================\n");
+
+    printf("Version: %1.1f\n", map->GetVersion());
+    printf("Orientation: %d\n", map->GetOrientation());
+    if (!map->GetBackgroundColor().empty())
+        printf("Background Color (hex): %s\n",
+               map->GetBackgroundColor().c_str());
+    printf("Render Order: %d\n", map->GetRenderOrder());
+    if (map->GetStaggerAxis())
+        printf("Stagger Axis: %d\n", map->GetStaggerAxis());
+    if (map->GetStaggerIndex())
+        printf("Stagger Index: %d\n", map->GetStaggerIndex());
+    printf("Width: %d\n", map->GetWidth());
+    printf("Height: %d\n", map->GetHeight());
+    printf("Tile Width: %d\n", map->GetTileWidth());
+    printf("Tile Height: %d\n", map->GetTileHeight());
 
     // Iterate through the tilesets.
     for (int i = 0; i < map->GetNumTilesets(); ++i)
@@ -60,8 +77,9 @@ int main(int argc, char * argv[])
         printf("Image Width: %d\n", tileset->GetImage()->GetWidth());
         printf("Image Height: %d\n", tileset->GetImage()->GetHeight());
         printf("Image Source: %s\n", tileset->GetImage()->GetSource().c_str());
-        printf("Transparent Color (hex): %s\n",
-                tileset->GetImage()->GetTransparentColor().c_str());
+        if (!tileset->GetImage()->GetTransparentColor().empty())
+            printf("Transparent Color (hex): %s\n",
+                   tileset->GetImage()->GetTransparentColor().c_str());
 
         if (tileset->GetTiles().size() > 0)
         {
@@ -93,6 +111,52 @@ int main(int argc, char * argv[])
                     printf("\tFrame %d: Tile ID = %d, Duration = %dms\n", i,
                             it->GetTileID(), it->GetDuration());
                 }
+            }
+
+            if(tile->HasObjects())
+            {
+                printf(
+                        "Tile has objects.\n");
+
+
+                // Iterate through all Collision objects in the tile.
+                for (int j = 0; j < tile->GetNumObjects(); ++j)
+                {
+                    // Get an object.
+                    const Tmx::Object *object = tile->GetObject(j);
+
+                    // Print information about the object.
+                    printf("Object Name: %s\n", object->GetName().c_str());
+                    printf("Object Position: (%03d, %03d)\n", object->GetX(),
+                           object->GetY());
+                    printf("Object Size: (%03d, %03d)\n", object->GetWidth(),
+                           object->GetHeight());
+
+                    // Print Polygon points.
+                    const Tmx::Polygon *polygon = object->GetPolygon();
+                    if (polygon != 0)
+                    {
+                        for (int i = 0; i < polygon->GetNumPoints(); i++)
+                        {
+                            const Tmx::Point &point = polygon->GetPoint(i);
+                            printf("Object Polygon: Point %d: (%f, %f)\n", i, point.x,
+                                   point.y);
+                        }
+                    }
+
+                    // Print Polyline points.
+                    const Tmx::Polyline *polyline = object->GetPolyline();
+                    if (polyline != 0)
+                    {
+                        for (int i = 0; i < polyline->GetNumPoints(); i++)
+                        {
+                            const Tmx::Point &point = polyline->GetPoint(i);
+                            printf("Object Polyline: Point %d: (%f, %f)\n", i, point.x,
+                                   point.y);
+                        }
+                    }
+                }
+
             }
         }
     }
@@ -187,7 +251,7 @@ int main(int argc, char * argv[])
                 for (int i = 0; i < polygon->GetNumPoints(); i++)
                 {
                     const Tmx::Point &point = polygon->GetPoint(i);
-                    printf("Object Polygon: Point %d: (%d, %d)\n", i, point.x,
+                    printf("Object Polygon: Point %d: (%f, %f)\n", i, point.x,
                             point.y);
                 }
             }
@@ -199,7 +263,7 @@ int main(int argc, char * argv[])
                 for (int i = 0; i < polyline->GetNumPoints(); i++)
                 {
                     const Tmx::Point &point = polyline->GetPoint(i);
-                    printf("Object Polyline: Point %d: (%d, %d)\n", i, point.x,
+                    printf("Object Polyline: Point %d: (%f, %f)\n", i, point.x,
                             point.y);
                 }
             }
@@ -207,8 +271,6 @@ int main(int argc, char * argv[])
     }
 
     delete map;
-
-    system("PAUSE");
 
     return 0;
 }

@@ -2,12 +2,16 @@ cmake_minimum_required(VERSION 2.8)
 project(tmxparser)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-set(VERSION_MAJOR 1)
+set(VERSION_MAJOR 2)
 set(VERSION_MINOR 0)
-set(VERSION_PATCH 0)
+set(VERSION_PATCH 1)
 
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 message("Configuring tmxparser version ${VERSION}")
+configure_file(
+  "${PROJECT_SOURCE_DIR}/src/Tmx.h.in"
+  "${PROJECT_BINARY_DIR}/Tmx.h"
+  )
 
 option(USE_MINIZ "Use miniz.c instead of zlib" OFF)
 
@@ -16,7 +20,8 @@ if (USE_MINIZ)
 endif (USE_MINIZ)
 
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
-file(GLOB_RECURSE HEADERS ${PROJECT_SOURCE_DIR}/src/*.h)
+file(GLOB_RECURSE HEADERS ${PROJECT_SOURCE_DIR}/src/*.h
+                          ${PROJECT_BINARY_DIR}/Tmx.h)
 
 if (USE_MINIZ)
     set(SOURCES ${SOURCES} ${PROJECT_SOURCE_DIR}/src/miniz.c)
@@ -56,10 +61,12 @@ if (NOT USE_MINIZ)
     include_directories(${ZLIB_INCLUDE_DIRS})
 endif (NOT USE_MINIZ)
 
-add_executable(test test/test.cpp)
-set_target_properties(test PROPERTIES
+add_executable(run_tests test/test.cpp)
+set_target_properties(run_tests PROPERTIES
   COMPILE_FLAGS ${EXAMPLE_CFLAGS})
-target_link_libraries(test tmxparser ${TINYXML2_LIBRARIES})
+target_link_libraries(run_tests tmxparser ${TINYXML2_LIBRARIES})
+include_directories("${PROJECT_BINARY_DIR}")
+include_directories("${PROJECT_SOURCE_DIR}/src")
 
 install(FILES ${HEADERS} DESTINATION include/tmxparser)
 install(TARGETS tmxparser tmxparser_static DESTINATION lib)
